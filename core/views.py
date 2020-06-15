@@ -1,12 +1,16 @@
+# Functional Imports
 import base64
-from .models import Image
-from .serializers import ImageSerializer
+import hashlib
 
 # third party imports
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
+
+# Project Imports
+from .models import Image
+from .serializers import ImageSerializer
 
 
 class FileUploadView(APIView):
@@ -20,12 +24,9 @@ class FileUploadView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = ImageSerializer(data=request.data)
         base64string = base64.b64encode(request.data['file'].read())
-        print("-------------------\n")
-        print(base64string)
-        print("\n-------------------\n")
-        # print(serializer.initial_data['file'])
+        md5hash = hashlib.md5(base64string)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response({'base64': base64string, 'md5': md5hash.hexdigest()}, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
